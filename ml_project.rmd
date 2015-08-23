@@ -94,7 +94,7 @@ cfmatrix <- confusionMatrix(test$classe, predict(modfit, newdata = test))
 cfmatrix
 ```
 
-Confusion matrix shows cross-validation results against test-validation dataset (40% of training).  We can see that CART model has accuracy of 49.34%, that means 50.66% out of sample error. 
+Confusion matrix shows cross-validation results against test-validation dataset (40% of training).  We can see that CART model has accuracy of 57.42%, that means 42.58% out of sample error. 
 
 Then I tried 'Random Forests tree model' for this classification type problem. 
 
@@ -106,7 +106,7 @@ cfmatrixRF <- confusionMatrix(test$classe, predict(modRFfit, newdata = test))
 cfmatrixRF
 ```
 
-From confusion matrix, we can see that Random Forest model as accuracy of 99.15% and out of sample error of 0.85%.  So Random Forest model is better one. 
+From confusion matrix, we can see that Random Forest model as accuracy of 99.07% and out of sample error of 0.93%.  So Random Forest model is better one. 
 
 
 ### Prediction using Random Forest model
@@ -131,7 +131,7 @@ FinalPrediction <- predict(modRFfit, newdata = subtestdata)
 
 ## Conclusion: 
 
-Random Forest prediction model is best fit with accuracy of 99.15% as shown above.  Predictions for 20 test cases in TEST data is given below, with 'Class A' being correct way of weight lifting. 
+Random Forest prediction model is best fit with accuracy of 99.07% as shown above.  Predictions for 20 test cases in TEST data is given below, with 'Class A' being correct way of weight lifting. 
 ```{r echo=TRUE}
 FinalPrediction
 ```
