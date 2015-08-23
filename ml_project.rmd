@@ -1,0 +1,137 @@
+---
+title: "Weight Lifting Exercise - how well?"
+author: "Yogesh Mokashi"
+date: "Sunday, August 23, 2015"
+output: html_document
+---
+
+## Executive summary: 
+
+This project analyzes personal activity data around  "Weight Lifting Exercise".  It uses data from accelerometers on the belt, forearm, arm and dumbell of 6 participants.  Goal is to find out 'how well?' (correctly or incorrectly) activity was done for given test data.  
+
+I found that Random Forests tree model was best suited for predictions with Accuracy of 99%.  Predictions for 20 test cases are given in conclusion section. 
+
+***
+
+### Data
+
+The training data for this project are available here: 
+
+<https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv>
+
+The test data are available here: 
+
+<https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv>
+
+More information is available from the website here: <http://groupware.les.inf.puc-rio.br/har#weight_lifting_exercises> 
+
+Dumbbell Biceps Curl in five different fashions (given below), shows how well weight lifting exercise was done.  We have to predict output as class A to E, based on test data. 
+
+1. Class A - Exactly according to the specification 
+2. Class B - Throwing the elbows to the front 
+3. Class C - Lifting the dumbbell only halfway 
+4. Class D - Lowering the dumbbell only halfway 
+5. Class E - Throwing the hips to the front 
+
+
+### Exploratory data analysis 
+
+```{r echo=TRUE}
+library(caret)
+library(randomForest)
+library(doParallel)
+```
+
+I downloaded training and test datasets from URLs and stored them in my working directory. 
+
+First read training data to be used in prediction model. 
+```{r echo=TRUE}
+# set working directory having data files, downloaded from given URL
+# read raw training data from csv file
+fulltraindata <- read.csv("./pml-training.csv")
+dim(fulltraindata)
+```
+
+As per the URL for more information (in Data section), we are supposed to analyze data from accelerometers on the belt, forearm, arm and dumbell.  Hence I selected related columns with 'classe' as a outcome variable, total 53 columns (as given below). 
+```{r echo=TRUE}
+# select specific columns for clean dataset 
+selectscols <- c(8:11, 37:49, 60:68, 84:86, 102, 113:124, 140, 151:159, 160)
+subtraindata <- fulltraindata[ , selectscols]
+
+dim(subtraindata)
+```
+
+As per norms, we are supposed to use only training dataset for buiding a model.  Hence I am split training data in train (60%) and test-validation (40%).  60% training data will be used to train prediction model 40% will be used in determing out of sample error and cross validation. 
+```{r echo=TRUE}
+# Divide training dataset into train(60 pct) and test(40 pct) subsets
+inTrain <- createDataPartition(subtraindata$classe, p=0.6, list=FALSE)
+
+train <- subtraindata[inTrain, ]
+test <- subtraindata[-inTrain, ]
+
+dim(train)
+dim(test)
+```
+
+
+### Model selection and model fit 
+
+First set seed so that results are reproducible.  Also I am setting 2 cores for parellel processing, just to reduce processing time. 
+```{r echo=TRUE}
+# set seed
+set.seed(1235) 
+
+# set 2 cores for parallel processing
+registerDoParallel(cores=2) 
+```
+
+As this is a classification type problem (outcome is class A to E), I tried 'Classification and Regression Trees (CART) model', but model accuracy was not good upon cross-validation. 
+```{r echo=TRUE}
+modfit <- train(classe ~ ., method = "rpart", data = train)
+
+cfmatrix <- confusionMatrix(test$classe, predict(modfit, newdata = test))
+
+cfmatrix
+```
+
+Confusion matrix shows cross-validation results against test-validation dataset (40% of training).  We can see that CART model has accuracy of 49.34%, that means 50.66% out of sample error. 
+
+Then I tried 'Random Forests tree model' for this classification type problem. 
+
+```{r echo=TRUE}
+modRFfit <- train(classe ~ ., method = "rf", data = train)
+
+cfmatrixRF <- confusionMatrix(test$classe, predict(modRFfit, newdata = test))
+
+cfmatrixRF
+```
+
+From confusion matrix, we can see that Random Forest model as accuracy of 99.15% and out of sample error of 0.85%.  So Random Forest model is better one. 
+
+
+### Prediction using Random Forest model
+
+Read test dataset for prediction, from csv file. 
+```{r echo=TRUE}
+# read actual TEST dataset
+fulltestdata <- read.csv("./pml-testing.csv")
+```
+
+We should apply same processing steps on test data; hence select same columns used in training model.  
+```{r echo=TRUE}
+# select same columns as of train dataset for prediction
+subtestdata <- fulltestdata[ , selectscols]
+
+```
+
+Get prediction for given test data, using Random Forest model. 
+```{r echo=TRUE}
+FinalPrediction <- predict(modRFfit, newdata = subtestdata)
+```
+
+## Conclusion: 
+
+Random Forest prediction model is best fit with accuracy of 99.15% as shown above.  Predictions for 20 test cases in TEST data is given below, with 'Class A' being correct way of weight lifting. 
+```{r echo=TRUE}
+FinalPrediction
+```
